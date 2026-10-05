@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0e1a">
+  <title>Code Fighter</title>
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --panel: #131a2b;
+      --panel-2: #1a2338;
+      --border: #253050;
+      --player: #22d3ee;
+      --enemy: #f43f5e;
+      --gold: #fbbf24;
+      --green: #22c55e;
+      --red: #ef4444;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --bg-dark: #06090f;
+      --panel-dark: #0f1729;
+      --panel-darker: #1a2540;
+      --gradient-panel: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+      --gradient-shimmer: linear-gradient(90deg, var(--player), var(--gold), var(--enemy));
+      --shadow-card: 0 20px 80px rgba(0,0,0,.7);
+      --shadow-panel: 0 8px 32px rgba(0,0,0,.5);
+      --shadow-button: 0 8px 24px rgba(34,211,238,.25);
+      --shadow-player: 0 0 20px rgba(34,211,238,.6);
+      --shadow-enemy: 0 0 20px rgba(244,63,94,.6);
+      --radius-sm: 8px;
+      --radius-md: 10px;
+      --radius-lg: 12px;
+      --radius-xl: 14px;
+      --radius-xxl: 16px;
+      --radius-full: 999px;
+      --radius-card: 20px;
+      --transition-fast: .15s;
+      --transition-normal: .2s;
+      --transition-slow: .3s;
+      --transition-ease: ease;
+      --transition-cubic: cubic-bezier(.4,0,.2,1);
+      --space-xs: 4px;
+      --space-sm: 6px;
+      --space-md: 8px;
+      --space-lg: 10px;
+      --space-xl: 12px;
+      --space-xxl: 14px;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+      --font-mono: "SFMono-Regular", Consolas, Menlo, monospace;
+      --max-width: 720px;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    html, body {
+      height: 100%;
+      background: radial-gradient(ellipse at top, #1a2338 0%, var(--bg) 70%);
+      color: var(--text);
+      font-family: var(--font-family);
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+    }
+    
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding: 16px;
+      padding-top: max(16px, env(safe-area-inset-top));
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
+    }
+    
+    @media (max-width: 640px) {
+      body { padding: 8px; padding-top: max(8px, env(safe-area-inset-top)); padding-bottom: max(8px, env(safe-area-inset-bottom)); }
+    }
+    
+    .screen { display: none; width: 100%; max-width: var(--max-width); flex-direction: column; gap: var(--space-xl); }
+    .screen.active { display: flex; }
+    
+    /* Profile Bar */
+    .profile-bar {
+      display: flex; align-items: center; gap: var(--space-lg); flex-wrap: wrap;
+      background: var(--gradient-panel); border: 1px solid var(--border); border-radius: var(--radius-lg);
+      padding: var(--space-sm) var(--space-lg); box-shadow: var(--shadow-panel); margin-bottom: var(--space-lg);
+    }
+    .prof-item { display: flex; align-items: center; gap: var(--space-xs); font-size: 13px; font-weight: 700; }
+    .prof-item .icon { font-size: 16px; }
+    .prof-item .val { color: #fff; font-variant-numeric: tabular-nums; }
+    .prof-item .lbl { color: var(--muted); font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; font-weight: 800; }
+    .prof-fighter { font-size: 26px; line-height: 1; }
+    .prof-spacer { flex: 1; }
+    .xp-bar { width: 80px; height: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+    .xp-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #7c3aed, #a78bfa); transition: width .4s ease; }
+    
+    /* Menu */
+    .menu-card {
+      background: var(--gradient-panel); border: 1.5px solid var(--border); border-radius: var(--radius-card);
+      padding: 40px 36px; text-align: center; box-shadow: var(--shadow-card); position: relative; overflow: hidden;
+    }
+    .menu-card::before {
+      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: var(--gradient-shimmer); background-size: 200% 100%; animation: shimmer 3s linear infinite;
+    }
+    .menu-card h1 {
+      font-size: 40px; font-weight: 900; letter-spacing: -1.5px; margin-bottom: 10px;
+      background: linear-gradient(135deg, #67e8f9, #a5b4fc, #fda4af);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+      line-height: 1.1;
+    }
+    .menu-card .tag { font-size: 14px; color: var(--muted); margin-bottom: 28px; font-style: italic; }
+    .menu-options { display: flex; flex-direction: column; gap: 12px; }
+    .menu-btn {
+      display: flex; align-items: center; gap: 16px; padding: 18px 22px;
+      background: var(--panel-dark); border: 1.5px solid var(--border); border-radius: var(--radius-xl);
+      color: var(--text); font-family: inherit; text-align: left; cursor: pointer;
+      transition: all .2s; touch-action: manipulation; min-height: 72px;
+    }
+    .menu-btn:hover:not(:disabled) {
+      background: var(--panel-darker); border-color: var(--player); transform: translateY(-2px);
+      box-shadow: var(--shadow-button);
+    }
+    .menu-btn:active:not(:disabled) { transform: scale(.98); }
+    .menu-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .menu-btn .icon { font-size: 34px; line-height: 1; }
+    .menu-btn strong { display: block; font-size: 15px; font-weight: 800; color: #fff; margin-bottom: 3px; }
+    .menu-btn small { font-size: 12px; color: var(--muted); font-weight: 600; }
+    
+    /* Fight HUD */
+    .fight-hud {
+      display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--space-lg);
+      background: var(--gradient-panel); border: 1px solid var(--border); border-radius: var(--radius-lg);
+      padding: var(--space-sm) var(--space-lg); box-shadow: var(--shadow-panel);
+    }
+    .fight-fighter-info { display: flex; flex-direction: column; gap: var(--space-xs); }
+    .fight-fighter-info.right { align-items: flex-end; }
+    .fight-name {
+      font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--player);
+    }
+    .fight-name.enemy-name { color: var(--enemy); }
+    .fight-bar {
+      width: 100%; max-width: 280px; height: 16px; background: var(--bg);
+      border: 2px solid var(--border); border-radius: var(--radius-sm); overflow: hidden;
+    }
+    .fight-fill {
+      height: 100%; width: 100%; background: linear-gradient(90deg, #0891b2, var(--player), #67e8f9);
+      border-radius: var(--radius-sm); transition: width .5s cubic-bezier(.4,0,.2,1);
+      box-shadow: 0 0 12px rgba(34,211,238,.6);
+    }
+    .fight-fill.enemy-fill {
+      background: linear-gradient(90deg, #be123c, var(--enemy), #fb7185);
+      box-shadow: 0 0 12px rgba(244,63,94,.6); margin-left: auto;
+    }
+    .fight-timer-box { text-align: center; min-width: 70px; }
+    .fight-timer {
+      font-size: 22px; font-weight: 900; font-variant-numeric: tabular-nums;
+      color: var(--gold); line-height: 1;
+    }
+    .fight-timer-label {
+      font-size: 8px; letter-spacing: 2px; color: var(--muted); font-weight: 800; margin-top: 3px;
+    }
+    
+    /* Arena */
+    .arena {
+      position: relative; height: 260px; border-radius: var(--radius-xl); overflow: hidden;
+      background: radial-gradient(ellipse 120% 80% at 50% 100%, rgba(255,120,60,.15) 0%, transparent 60%),
+                 linear-gradient(180deg, #1a1a3e 0%, #2d1b4e 40%, #3d1f3d 70%, #1a0f1f 100%);
+      border: 1px solid var(--border); box-shadow: inset 0 0 60px rgba(0,0,0,.6);
+    }
+    .arena::before {
+      content: ""; position: absolute; inset: 0;
+      background-image: radial-gradient(1px 1px at 15% 20%, #fff, transparent),
+                         radial-gradient(1px 1px at 58% 25%, #fff, transparent),
+                         radial-gradient(2px 2px at 45% 15%, #fff, transparent),
+                         radial-gradient(1px 1px at 80% 45%, #fff, transparent);
+      opacity: .5; animation: twinkle 4s ease-in-out infinite;
+    }
+    .arena::after {
+      content: ""; position: absolute; bottom: 0; left: 0; right: 0; height: 50px;
+      background: linear-gradient(180deg, transparent, rgba(80,20,60,.9));
+      border-top: 2px solid rgba(244,63,94,.4); pointer-events: none;
+    }
+    .fighter {
+      position: absolute; bottom: 40px; font-size: 84px; line-height: 1;
+      user-select: none; z-index: 3; filter: drop-shadow(0 8px 16px rgba(0,0,0,.6));
+      transition: filter .2s;
+    }
+    .fighter.player { left: 8%; transform-origin: bottom center; filter: var(--shadow-player) drop-shadow(0 8px 16px rgba(0,0,0,.6)); }
+    .fighter.enemy { right: 8%; filter: var(--shadow-enemy) drop-shadow(0 8px 16px rgba(0,0,0,.6)); transform: scaleX(-1); }
+    .fighter.lunge { animation: lungeIn .85s cubic-bezier(.2,.9,.2,1); }
+    .fighter.hit { animation: hitShake .45s ease; }
+    .fighter.enemy.hit { animation: enemyHitShake .45s ease; }
+    
+    /* Question Panel */
+    .fight-question-wrap {
+      background: var(--gradient-panel); border: 1.5px solid var(--border);
+      border-radius: var(--radius-xl); padding: var(--space-lg) var(--space-xl) var(--space-xl);
+      box-shadow: var(--shadow-panel); position: relative;
+    }
+    .fight-question-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-sm); }
+    .question-counter {
+      font-size: 10.5px; font-weight: 800; letter-spacing: 1.6px;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .tier-timer {
+      font-family: monospace; font-weight: 800; font-size: 12.5px;
+      padding: 3px 10px; border-radius: var(--radius-sm);
+      background: var(--bg-dark); border: 1px solid var(--border); color: var(--gold);
+    }
+    .question-badge {
+      display: inline-block; font-size: 9.5px; font-weight: 800; letter-spacing: 1.4px;
+      text-transform: uppercase; background: linear-gradient(135deg, #2563eb, #7c3aed);
+      color: #fff; padding: 4px 10px; border-radius: var(--radius-full); margin-bottom: var(--space-sm);
+    }
+    .question-title {
+      font-size: 17px; font-weight: 800; color: #fff; margin-bottom: 6px; line-height: 1.25;
+    }
+    .question-prompt {
+      font-size: 13px; color: var(--muted); margin-bottom: 12px; line-height: 1.5;
+    }
+    .question-code {
+      background: var(--bg-dark); border: 1px solid var(--border);
+      border-left: 3px solid var(--player); border-radius: var(--radius-sm);
+      padding: 12px 14px; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.65;
+      color: #a5f3fc; white-space: pre; overflow-x: auto; margin-bottom: 14px;
+    }
+    
+    /* Buttons */
+    .btn {
+      font: inherit; font-weight: 800; font-size: 13px; letter-spacing: .5px;
+      padding: 12px 22px; border-radius: var(--radius-md); border: none;
+      cursor: pointer; transition: all .15s; text-transform: uppercase;
+      touch-action: manipulation; min-height: 46px;
+    }
+    .btn.primary {
+      background: linear-gradient(135deg, #16a34a, var(--green));
+      color: #fff; box-shadow: 0 4px 16px rgba(34,197,94,.4);
+    }
+    .btn.primary:hover:not(:disabled) { transform: translateY(-1px); }
+    .btn.primary:active:not(:disabled) { transform: scale(.98); }
+    .btn.ghost {
+      background: transparent; border: 1.5px solid var(--border); color: var(--muted);
+    }
+    .btn.ghost:hover:not(:disabled) { border-color: var(--player); color: var(--player); }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+    
+    /* MCQ Options */
+    .mcq-list { display: flex; flex-direction: column; gap: 7px; }
+    .mcq-option {
+      text-align: left; padding: 12px 14px 12px 40px;
+      background: var(--panel-dark); border: 1.5px solid var(--border);
+      border-radius: var(--radius-md); color: var(--text);
+      font-size: 13.5px; font-family: inherit; font-weight: 600;
+      cursor: pointer; transition: all .15s; position: relative;
+      touch-action: manipulation; min-height: 44px;
+    }
+    .mcq-option::before {
+      content: attr(data-letter); position: absolute; left: 12px; top: 50%;
+      transform: translateY(-50%); width: 20px; height: 20px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--panel-2); border-radius: 5px; font-size: 10px;
+      font-weight: 900; color: var(--muted); border: 1px solid var(--border);
+    }
+    .mcq-option:hover:not(:disabled) {
+      background: var(--panel-darker); border-color: var(--player); transform: translateX(3px);
+    }
+    .mcq-option:hover:not(:disabled)::before {
+      background: var(--player); color: var(--bg-dark); border-color: var(--player);
+    }
+    .mcq-option:disabled { opacity: .5; cursor: not-allowed; }
+    
+    /* Feedback */
+    .fight-feedback {
+      margin-top: 12px; min-height: 20px; font-size: 12.5px;
+      font-weight: 600; line-height: 1.5; padding: 0 2px; transition: color .3s;
+    }
+    .fight-feedback.correct { color: #4ade80; }
+    .fight-feedback.wrong { color: #f87171; }
+    .fight-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .fight-actions .btn { flex: 1; min-width: 0; font-size: 11.5px; padding: 10px 12px; }
+    
+    /* Level Cards */
+    .level-card {
+      position: relative; display: flex; align-items: center; gap: 14px;
+      padding: 16px 18px; background: var(--gradient-panel);
+      border: 1.5px solid var(--border); border-radius: var(--radius-xl);
+      cursor: pointer; transition: all .2s; touch-action: manipulation; margin-bottom: 10px;
+    }
+    .level-card:hover:not(.locked) {
+      border-color: var(--player); transform: translateX(4px); box-shadow: var(--shadow-button);
+    }
+    .level-card:active:not(.locked) { transform: scale(.99); }
+    .level-card.locked { opacity: .4; cursor: not-allowed; }
+    .level-card.cleared { border-left: 4px solid var(--gold); }
+    .level-card.boss { background: linear-gradient(180deg, #2a1030 0%, #1a0f1f 100%); border-color: #4a1f24; }
+    .level-icon { font-size: 32px; line-height: 1; flex: 0 0 auto; }
+    .level-body { flex: 1; min-width: 0; }
+    .level-name { font-size: 14.5px; font-weight: 800; color: #fff; margin-bottom: 3px; }
+    .level-meta { font-size: 11px; color: var(--muted); font-weight: 600; letter-spacing: .4px; }
+    .level-stars { font-size: 14px; color: var(--gold); letter-spacing: 2px; }
+    .level-locked { font-size: 10.5px; color: #f87171; margin-top: 4px; font-weight: 700; letter-spacing: .3px; }
+    
+    /* Map Header */
+    .map-header { display: flex; align-items: center; gap: 12px; padding: 4px 0 8px; }
+    .back-btn {
+      background: transparent; border: 1.5px solid var(--border);
+      color: var(--muted); font: inherit; font-weight: 800; font-size: 13px;
+      padding: 10px 16px; border-radius: var(--radius-sm); cursor: pointer;
+      transition: all .15s; touch-action: manipulation;
+    }
+    .back-btn:hover { border-color: var(--player); color: var(--player); }
+    .map-title { font-size: 18px; font-weight: 900; letter-spacing: -.3px; }
+    .map-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .volume-header {
+      font-size: 11px; font-weight: 800; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--muted); padding: 20px 4px 10px;
+    }
+    .volume-header::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+    .level-list { display: flex; flex-direction: column; gap: 0; }
+    
+    /* Recap */
+    .recap-card {
+      background: var(--gradient-panel); border: 1.5px solid var(--border);
+      border-radius: var(--radius-card); padding: 32px 28px 28px;
+      text-align: center; box-shadow: var(--shadow-card); position: relative;
+      overflow: hidden; max-height: 90vh; overflow-y: auto;
+    }
+    .recap-card::before {
+      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: var(--gradient-shimmer);
+    }
+    .recap-headline {
+      font-size: 34px; font-weight: 900; letter-spacing: 1.5px;
+      margin-bottom: 8px; line-height: 1.1; text-transform: uppercase;
+    }
+    .recap-headline.win {
+      background: linear-gradient(135deg, var(--gold), var(--green));
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .recap-headline.loss {
+      background: linear-gradient(135deg, var(--enemy), #7c3aed);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .recap-stars { font-size: 30px; letter-spacing: 8px; color: var(--gold); margin-bottom: 6px; }
+    .recap-subtitle { font-size: 13px; color: var(--muted); margin-bottom: 20px; font-style: italic; }
+    .recap-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px; }
+    .recap-stat { background: var(--panel-dark); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 10px 4px; }
+    .recap-stat-val { font-size: 18px; font-weight: 900; color: #fff; font-variant-numeric: tabular-nums; margin-bottom: 3px; }
+    .recap-stat-lbl { font-size: 9px; color: var(--muted); letter-spacing: 1.4px; text-transform: uppercase; font-weight: 800; }
+    .recap-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .recap-actions .btn { flex: 1; min-width: 140px; }
+    
+    /* Shop */
+    .shop-header { display: flex; align-items: center; gap: 12px; padding: 4px 0 12px; }
+    .shop-wallet {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--panel-dark); border: 1.5px solid var(--gold);
+      border-radius: var(--radius-md); padding: 8px 14px;
+      font-size: 14px; font-weight: 800; color: var(--gold);
+    }
+    .shop-wallet span { font-size: 16px; }
+    .shop-grid { display: flex; flex-direction: column; gap: 10px; }
+    .shop-card {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--gradient-panel); border: 1.5px solid var(--border);
+      border-radius: var(--radius-xl); padding: 14px 18px; transition: all .15s;
+    }
+    .shop-card.owned { border-color: rgba(34,197,94,.4); }
+    .shop-card.unaffordable { opacity: .55; }
+    .shop-icon { font-size: 32px; line-height: 1; flex: 0 0 auto; }
+    .shop-body { flex: 1; min-width: 0; }
+    .shop-name { font-size: 14.5px; font-weight: 800; color: #fff; margin-bottom: 3px; }
+    .shop-owned { font-size: 10px; font-weight: 800; letter-spacing: .8px; padding: 2px 8px; border-radius: 999px; background: rgba(34,197,94,.15); color: #4ade80; border: 1px solid rgba(34,197,94,.3); }
+    .shop-desc { font-size: 12px; color: var(--muted); line-height: 1.4; }
+    .shop-action { flex: 0 0 auto; }
+    .shop-buy {
+      display: flex; align-items: center; gap: 6px; padding: 10px 16px;
+      background: linear-gradient(135deg, #d97706, var(--gold)); border: none;
+      border-radius: var(--radius-md); color: #0a0e1a; font-family: inherit;
+      font-size: 13.5px; font-weight: 900; cursor: pointer; transition: all .15s;
+      touch-action: manipulation;
+    }
+    .shop-buy:hover:not(:disabled) { transform: translateY(-1px); }
+    .shop-buy:active:not(:disabled) { transform: scale(.96); }
+    .shop-buy:disabled { background: var(--panel-darker); color: var(--muted); cursor: not-allowed; }
+    .owned-text { padding: 10px 16px; font-size: 12px; color: #4ade80; font-weight: 800; letter-spacing: .5px; }
+    
+    /* Settings */
+    .settings-section {
+      background: var(--gradient-panel); border: 1.5px solid var(--border);
+      border-radius: var(--radius-xl); padding: 18px 20px; margin-bottom: 12px;
+    }
+    .settings-title {
+      font-size: 12px; font-weight: 800; letter-spacing: 1.8px;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 14px;
+    }
+    .settings-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .settings-row label { flex: 0 0 110px; font-size: 13px; font-weight: 700; color: var(--text); }
+    .settings-row input[type=range] {
+      flex: 1; height: 6px; background: var(--bg); border-radius: 3px;
+      -webkit-appearance: none; appearance: none; outline: none; border: 1px solid var(--border);
+    }
+    .settings-row input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 20px; height: 20px;
+      background: var(--player); border-radius: 50%; cursor: pointer;
+      box-shadow: 0 0 12px rgba(34,211,238,.6);
+    }
+    .settings-row input[type=range]::-moz-range-thumb {
+      width: 20px; height: 20px; background: var(--player); border-radius: 50%;
+      cursor: pointer; border: none; box-shadow: 0 0 12px rgba(34,211,238,.6);
+    }
+    .settings-val {
+      flex: 0 0 46px; text-align: right; font-family: monospace; font-size: 12.5px;
+      color: var(--player); font-weight: 800;
+    }
+    .settings-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .stat-cell {
+      background: var(--panel-dark); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 10px 4px; text-align: center;
+    }
+    .stat-cell-val { font-size: 18px; font-weight: 900; color: #fff; font-variant-numeric: tabular-nums; margin-bottom: 2px; }
+    .stat-cell-lbl { font-size: 9px; color: var(--muted); letter-spacing: 1.4px; text-transform: uppercase; font-weight: 800; }
+    .settings-action {
+      display: block; width: 100%; padding: 12px 16px; margin-bottom: 8px;
+      background: var(--panel-dark); border: 1.5px solid var(--border);
+      border-radius: var(--radius-md); color: var(--text); font-family: inherit;
+      font-size: 13px; font-weight: 700; text-align: left; cursor: pointer;
+      transition: all .15s; touch-action: manipulation; min-height: 46px;
+    }
+    .settings-action:hover { border-color: var(--player); background: var(--panel-darker); }
+    .settings-action.danger { border-color: #4a1f24; color: #fecaca; background: linear-gradient(180deg, #3a0f14, #1f0a0d); }
+    .settings-action.danger:hover { border-color: var(--enemy); background: linear-gradient(180deg, #4a1019, #2a0a10); }
+    
+    /* Toast */
+    .shop-toast {
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(40px);
+      padding: 12px 22px; background: linear-gradient(135deg, #16a34a, var(--green));
+      color: #fff; font-weight: 800; font-size: 13.5px; border-radius: var(--radius-lg);
+      box-shadow: 0 20px 60px rgba(0,0,0,.7); z-index: 999; opacity: 0;
+      transition: all .35s cubic-bezier(.2,.9,.3,1); pointer-events: none;
+    }
+    .shop-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .shop-toast.error { background: linear-gradient(135deg, #dc2626, var(--enemy)); }
+    
+    /* Animations */
+    @keyframes shimmer { to { background-position: 200% 0; } }
+    @keyframes lungeIn {
+      0% { transform: translateX(0) scale(1); } 22% { transform: translateX(-30px) scale(.9); }
+      38% { transform: translateX(230px) scale(1.35) rotate(-10deg); } 55% { transform: translateX(240px) scale(1.4) rotate(-10deg); }
+      100% { transform: translateX(0) scale(1) rotate(0deg); }
+    }
+    @keyframes hitShake {
+      0%, 100% { filter: drop-shadow(0 0 20px rgba(34,211,238,.6)); }
+      15% { transform: translateX(-14px); filter: brightness(3) drop-shadow(0 0 40px #fff); }
+      30% { transform: translateX(10px); }
+      45% { transform: translateX(-8px); filter: brightness(3) drop-shadow(0 0 40px #fff); }
+      60% { transform: translateX(6px); }
+      75% { transform: translateX(-3px); }
+    }
+    @keyframes enemyHitShake {
+      0%, 100% { transform: scaleX(-1) translateX(0); filter: drop-shadow(0 0 20px rgba(244,63,94,.6)); }
+      15% { transform: scaleX(-1) translateX(-14px); filter: brightness(3) drop-shadow(0 0 40px #fff); }
+      30% { transform: scaleX(-1) translateX(10px); }
+      45% { transform: scaleX(-1) translateX(-8px); filter: brightness(3) drop-shadow(0 0 40px #fff); }
+      60% { transform: scaleX(-1) translateX(6px); }
+      75% { transform: scaleX(-1) translateX(-3px); }
+    }
+    @keyframes twinkle { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
+    
+    /* Responsive */
+    @media (max-width: 640px) {
+      .arena { height: 190px; }
+      .fighter { font-size: 60px; bottom: 30px; }
+      .fight-name { font-size: 9px; letter-spacing: 1.5px; }
+      .fight-bar { height: 14px; max-width: 110px; }
+      .fight-timer { font-size: 18px; }
+      .fight-question-wrap { padding: 12px 14px 14px; }
+      .question-title { font-size: 15px; }
+      .question-prompt { font-size: 12.5px; }
+      .question-code { font-size: 11.5px; padding: 10px; }
+      .mcq-option { font-size: 12.5px; padding: 10px 12px 10px 36px; }
+      .tier-label { font-size: 28px; }
+      .recap-card { padding: 24px 18px; }
+      .recap-headline { font-size: 26px; }
+      .recap-stats { grid-template-columns: repeat(2, 1fr); }
+      .recap-row { grid-template-columns: 26px 18px 1fr auto; font-size: 11px; }
+      .recap-type { display: none; }
+      .recap-rewards { flex-direction: column; align-items: center; }
+      .menu-card { padding: 28px 22px; }
+      .menu-card h1 { font-size: 30px; }
+      .level-card { padding: 14px 14px; }
+      .level-icon { font-size: 26px; }
+      .xp-bar { width: 60px; }
+      .shop-card { padding: 12px 14px; gap: 10px; }
+      .shop-icon { font-size: 26px; }
+      .shop-desc { font-size: 11.5px; }
+      .shop-name { font-size: 13.5px; }
+      .shop-buy { padding: 9px 12px; font-size: 12.5px; }
+      .settings-stats { grid-template-columns: repeat(2, 1fr); }
+      .settings-row label { flex: 0 0 80px; font-size: 12px; }
+    }
+    
+    @media (max-width: 420px) {
+      .arena { height: 165px; }
+      .fighter { font-size: 52px; }
+      .fight-bar { max-width: 90px; }
+      body { padding: 6px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="profile-bar"></div>
+  <div id="menu-screen" class="screen active"></div>
+  <div id="map-screen" class="screen"></div>
+  <div id="fight-screen" class="screen"></div>
+  <div id="recap-screen" class="screen"></div>
+  <div id="shop-screen" class="screen"></div>
+  <div id="settings-screen" class="screen"></div>
+  <div class="shop-toast" id="shop-toast"></div>
+
+  <script>
+    // ========== CONFIG ==========
+    const CONFIG = {
+      storageKey: 'codefighter_profile_v1',
+      patterns: [
+        { id: 'p1', name: 'Converging', volume: 1 },
+        { id: 'p2', name: 'Read-Write', volume: 1 },
+        { id: 'p3', name: 'Backwards Write', volume: 1 },
+        { id: 'p4', name: 'Sliding Window', volume: 1 },
+        { id: 'p5', name: 'Two-Array Merge', volume: 1 },
+        { id: 'p6', name: 'Prefix Sum', volume: 1 }
+      ],
+      tiers: [
+        { suffix: 'easy', diff: 1, enemy: 'bot', questions: 5, reward: { xp: 50, coins: 20 } },
+        { suffix: 'medium', diff: 2, enemy: 'bot', questions: 6, reward: { xp: 80, coins: 30 } },
+        { suffix: 'hard', diff: 3, enemy: 'ghost', questions: 7, reward: { xp: 120, coins: 45 } },
+        { suffix: 'boss', diff: 3, enemy: 'boss', questions: 8, reward: { xp: 200, coins: 100 } }
+      ],
+      fighters: [
+        { id: 'ninja', name: 'Ninja', icon: '\ud83e\udd77', unlockLevel: 1 },
+        { id: 'monk', name: 'Monk', icon: '\ud83e\uddd8', unlockLevel: 3 },
+        { id: 'ronin', name: 'Ronin', icon: '\u2694\ufe0f', unlockLevel: 5 }
+      ],
+      enemies: {
+        bot: { name: 'Bot', icon: '\ud83e\udd16' },
+        ghost: { name: 'Ghost', icon: '\ud83d\udc7b' },
+        boss: { name: 'Boss', icon: '\ud83d\udc81' }
+      }
+    };
+
+    // ========== STATE (Global) ==========
+    const State = {
+      profile: null,
+      session: {
+        mode: 'campaign', campaignLevel: null, enemyArchetype: 'bot',
+        questionsRemaining: 0, combo: 0, correct: 0, answered: 0, hintsUsed: 0,
+        perfectAnswers: 0, maxCombo: 0, playerHP: 100, enemyHP: 100, enemyMaxHP: 100,
+        roundLog: [], questionStartTime: 0
+      },
+      levels: [],
+      
+      defaultProfile: function() {
+        return {
+          version: 1, xp: 0, playerLevel: 1, coins: 50,
+          unlockedFighters: ['ninja'], equippedFighter: 'ninja',
+          achievements: {}, campaignLevels: {}, 
+          streak: { current: 0, best: 0, lastPlayedDate: null, freezesLeft: 1 },
+          settings: { musicVolume: 0.4, sfxVolume: 0.7 }
+        };
+      },
+      
+      load: function() {
+        try { 
+          const raw = localStorage.getItem(CONFIG.storageKey); 
+          if (!raw) return null; 
+          return JSON.parse(raw); 
+        } catch { return null; }
+      },
+      
+      save: function() { 
+        localStorage.setItem(CONFIG.storageKey, JSON.stringify(this.profile)); 
+      },
+      
+      xpForLevel: function(l) { 
+        return l <= 1 ? 0 : Math.round(100 * Math.pow(l - 1, 1.4)); 
+      },
+      
+      addXP: function(amt) { 
+        this.profile.xp += amt; 
+        let leveled = false; 
+        while (this.profile.xp >= this.xpForLevel(this.profile.playerLevel + 1)) { 
+          this.profile.playerLevel++; 
+          leveled = true; 
+          CONFIG.fighters.forEach(f => { 
+            if (f.unlockLevel === this.profile.playerLevel && !this.profile.unlockedFighters.includes(f.id)) 
+              this.profile.unlockedFighters.push(f.id); 
+          }); 
+        } 
+        this.save(); 
+        return leveled; 
+      },
+      
+      addCoins: function(amt) { 
+        this.profile.coins += amt; 
+        this.save(); 
+      },
+      
+      getLevel: function(id) { 
+        return this.levels.find(l => l.id === id); 
+      },
+      
+      isUnlocked: function(id) { 
+        const idx = this.levels.findIndex(l => l.id === id); 
+        if (idx <= 0) return true; 
+        return !!(this.profile.campaignLevels[this.levels[idx - 1].id]?.cleared); 
+      },
+      
+      completeLevel: function(id, stars) { 
+        const prev = this.profile.campaignLevels[id] || { stars: 0 }; 
+        this.profile.campaignLevels[id] = { 
+          cleared: true, 
+          stars: Math.max(prev.stars || 0, stars), 
+          bestTime: prev.bestTime || 0 
+        }; 
+        this.save(); 
+      },
+      
+      getFighter: function(id) { 
+        return CONFIG.fighters.find(f => f.id === id) || CONFIG.fighters[0]; 
+      },
+      
+      equipFighter: function(id) { 
+        if (!this.profile.unlockedFighters.includes(id)) return false; 
+        this.profile.equippedFighter = id; 
+        this.save(); 
+        return true; 
+      },
+      
+      todayISO: function() { 
+        return new Date().toISOString().slice(0, 10); 
+      },
+      
+      checkStreak: function() { 
+        const today = this.todayISO(); 
+        const last = this.profile.streak.lastPlayedDate; 
+        if (last === today) return false; 
+        const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10); 
+        if (last === yesterday) this.profile.streak.current++; 
+        else if (this.profile.streak.freezesLeft > 0 && last) { 
+          this.profile.streak.freezesLeft--; 
+          this.profile.streak.current++; 
+        } else this.profile.streak.current = 1; 
+        if (this.profile.streak.current > this.profile.streak.best) 
+          this.profile.streak.best = this.profile.streak.current; 
+        this.profile.streak.lastPlayedDate = today; 
+        this.save(); 
+        return true; 
+      }
+    };
+
+    // Initialize levels
+    State.levels = CONFIG.patterns.flatMap((p, i) => 
+      CONFIG.tiers.map((t, j) => ({
+        id: `${p.id}-${t.suffix}`, 
+        pattern: p.id, patternName: p.name, volume: p.volume,
+        name: `${p.name} \u00b7 ${t.suffix.charAt(0).toUpperCase() + t.suffix.slice(1)}`,
+        tier: t.suffix, diff: t.diff, enemy: t.enemy, 
+        questions: t.questions, reward: t.reward, order: i * 4 + j
+      }))
+    );
+
+    // Load profile
+    State.profile = State.load() || State.defaultProfile();
+
+    // ========== UI (Global) ==========
+    const UI = {
+      showScreen: function(name) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        const screen = document.getElementById(name + '-screen');
+        if (screen) screen.classList.add('active');
+        if (name === 'menu') this.updateProfileBar();
+        else if (name === 'map') Campaign.renderMap();
+        else if (name === 'shop') Shop.render();
+        else if (name === 'settings') Settings.render();
+      },
+      
+      updateProfileBar: function() {
+        const p = State.profile; 
+        const f = State.getFighter(p.equippedFighter);
+        const totalStars = Object.values(p.campaignLevels).reduce((s, l) => s + (l.stars || 0), 0);
+        const xpPercent = p.xp > 0 ? Math.min((p.xp / State.xpForLevel(p.playerLevel + 1)) * 100, 100) : 0;
+        document.getElementById('profile-bar').innerHTML = `
+          <div class="profile-bar">
+            <div class="prof-item"><span class="icon">&#128200;</span><span class="val">${p.playerLevel}</span><span class="lbl">Level</span></div>
+            <div class="prof-item"><span class="icon">&#128176;</span><span class="val">${p.xp}</span><span class="lbl">XP</span></div>
+            <div class="prof-item"><span class="icon">&#128172;</span><span class="val">${p.coins}</span><span class="lbl">Coins</span></div>
+            <div class="prof-item prof-fighter">${f.icon}</div>
+            <div class="prof-spacer"></div>
+            <div class="prof-item"><span class="icon">&#128293;</span><span class="val">${p.streak.current}</span><span class="lbl">Streak</span></div>
+            <div class="prof-item"><span class="icon">&#9733;</span><span class="val">${totalStars}</span><span class="lbl">Stars</span></div>
+            <div class="prof-item"><div class="xp-bar"><div class="xp-fill" style="width:${xpPercent}%"></div></div></div>
+          </div>
+        `;
+      },
+      
+      showToast: function(msg, err) {
+        const t = document.getElementById('shop-toast');
+        if (!t) return;
+        t.textContent = msg; 
+        t.className = 'shop-toast' + (err ? ' error' : '');
+        setTimeout(() => t.classList.add('show'), 10);
+        setTimeout(() => t.classList.remove('show'), 2000);
+      }
+    };
+
+    // ========== CAMPAIGN (Global) ==========
+    const Campaign = {
+      renderMap: function() {
+        const list = document.getElementById('level-list');
+        if (!list) return;
+        list.innerHTML = '';
+        const byPattern = {};
+        State.levels.forEach(l => { 
+          if (!byPattern[l.pattern]) byPattern[l.pattern] = []; 
+          byPattern[l.pattern].push(l); 
+        });
+        Object.entries(byPattern).forEach(([pid, levels]) => {
+          const p = CONFIG.patterns.find(x => x.id === pid);
+          if (!p) return;
+          const h = document.createElement('div'); 
+          h.className = 'volume-header'; 
+          h.innerHTML = `<span>&#128193; ${p.name}</span>`;
+          list.appendChild(h);
+          levels.forEach(l => list.appendChild(this.createLevelCard(l)));
+        });
+      },
+      
+      createLevelCard: function(level) {
+        const card = document.createElement('div');
+        card.className = 'level-card' + (level.tier === 'boss' ? ' boss' : '');
+        const isUnlocked = State.isUnlocked(level.id);
+        const isCleared = State.profile.campaignLevels[level.id]?.cleared;
+        const stars = State.profile.campaignLevels[level.id]?.stars || 0;
+        if (!isUnlocked) card.classList.add('locked');
+        if (isCleared) card.classList.add('cleared');
+        const locked = !isUnlocked ? 'Clear previous level first' : null;
+        const ei = CONFIG.enemies[level.enemy]?.icon || '&#128374;';
+        card.innerHTML = `
+          <span class="level-icon">${ei}</span>
+          <div class="level-body">
+            <div class="level-name">${level.name}</div>
+            <div class="level-meta">${level.questions} questions &middot; Diff: ${level.diff}/3</div>
+          </div>
+          <span class="level-stars">${'&#9733;'.repeat(stars)}${'&#9734;'.repeat(3 - stars)}</span>
+          ${locked ? `<div class="level-locked">${locked}</div>` : ''}
+        `;
+        if (isUnlocked) {
+          card.onclick = function() { Campaign.startLevel(level.id); };
+        }
+        return card;
+      },
+      
+      startLevel: function(levelId) {
+        const level = State.getLevel(levelId);
+        if (!level) return;
+        State.session.campaignLevel = levelId;
+        State.session.enemyArchetype = level.enemy;
+        State.session.questionsRemaining = level.questions;
+        State.session.playerHP = 100;
+        State.session.enemyHP = 100;
+        State.session.enemyMaxHP = 100;
+        State.session.correct = 0;
+        State.session.answered = 0;
+        State.session.combo = 0;
+        UI.showScreen('fight');
+        Fight.startFight(level);
+      }
+    };
+
+    // ========== FIGHT (Global) ==========
+    const Fight = {
+      timer: null,
+      
+      startFight: function(level) {
+        this.updateHUD();
+        const bb = document.getElementById('boss-banner');
+        if (bb) { 
+          bb.style.display = level.tier === 'boss' ? 'block' : 'none'; 
+          bb.textContent = level.tier === 'boss' ? '&#9888; BOSS FIGHT!' : ''; 
+        }
+        this.loadNextQuestion();
+      },
+      
+      updateHUD: function() {
+        const s = State.session; 
+        const p = State.profile;
+        const pn = document.getElementById('fight-player-name');
+        const en = document.getElementById('fight-enemy-name');
+        const pf = document.getElementById('player-hp-fill');
+        const ef = document.getElementById('enemy-hp-fill');
+        if (pn) pn.textContent = State.getFighter(p.equippedFighter).name;
+        if (en) en.textContent = CONFIG.enemies[s.enemyArchetype]?.name || s.enemyArchetype;
+        if (pf) pf.style.width = `${s.playerHP}%`;
+        if (ef) ef.style.width = `${(s.enemyHP / s.enemyMaxHP) * 100}%`;
+      },
+      
+      loadNextQuestion: function() {
+        const s = State.session;
+        if (s.questionsRemaining <= 0 || s.playerHP <= 0) { 
+          this.endFight(s.playerHP > 0); 
+          return; 
+        }
+        if (s.enemyHP <= 0) { 
+          this.endFight(true); 
+          return; 
+        }
+        s.questionsRemaining--;
+        s.answered++;
+        const q = this.generateQuestion();
+        this.displayQuestion(q);
+        this.startTimer();
+      },
+      
+      generateQuestion: function() {
+        const qs = {
+          mcq: {
+            type: 'mcq',
+            title: 'What is the time complexity of binary search?',
+            prompt: 'On a sorted array of size n',
+            code: 'int binarySearch(int[] arr, int target) {\n  int left = 0, right = arr.length - 1;\n  while (left <= right) {\n    int mid = left + (right - left) / 2;\n    if (arr[mid] == target) return mid;\n    if (arr[mid] < target) left = mid + 1;\n    else right = mid - 1;\n  }\n  return -1;\n}',
+            options: [
+              { text: 'O(n)', correct: false },
+              { text: 'O(log n)', correct: true },
+              { text: 'O(n log n)', correct: false },
+              { text: 'O(1)', correct: false }
+            ]
+          }
+        };
+        return qs.mcq;
+      },
+      
+      displayQuestion: function(q) {
+        const s = State.session; 
+        const level = State.getLevel(s.campaignLevel);
+        const ctr = document.getElementById('question-counter');
+        const title = document.getElementById('question-title');
+        const prompt = document.getElementById('question-prompt');
+        const code = document.getElementById('question-code');
+        if (ctr) ctr.textContent = `Q${level.questions - s.questionsRemaining + 1}/${level.questions}`;
+        if (title) title.textContent = q.title;
+        if (prompt) prompt.textContent = q.prompt;
+        if (code) code.textContent = q.code;
+        
+        const mcq = document.getElementById('mcq-options');
+        if (mcq) {
+          mcq.innerHTML = '';
+          const letters = ['A', 'B', 'C', 'D'];
+          q.options.forEach((o, i) => {
+            const b = document.createElement('button');
+            b.className = 'mcq-option';
+            b.innerHTML = o.text;
+            b.setAttribute('data-letter', letters[i]);
+            b.onclick = function() { Fight.selectAnswer(o.correct); };
+            mcq.appendChild(b);
+          });
+        }
+        
+        const fb = document.getElementById('fight-feedback');
+        if (fb) fb.textContent = '';
+        const act = document.getElementById('fight-actions');
+        if (act) act.innerHTML = '';
+      },
+      
+      selectAnswer: function(isCorrect) {
+        this.clearTimer();
+        const s = State.session;
+        if (isCorrect) {
+          s.correct++; 
+          s.combo++; 
+          s.maxCombo = Math.max(s.maxCombo, s.combo);
+          s.enemyHP = Math.max(0, s.enemyHP - (20 + s.combo * 2));
+          const fb = document.getElementById('fight-feedback');
+          if (fb) { 
+            fb.textContent = 'Correct! +' + (20 + s.combo * 2) + ' damage'; 
+            fb.className = 'fight-feedback correct'; 
+          }
+        } else {
+          s.combo = 0; 
+          s.playerHP = Math.max(0, s.playerHP - 15);
+          const fb = document.getElementById('fight-feedback');
+          if (fb) { 
+            fb.textContent = 'Wrong! -15 HP'; 
+            fb.className = 'fight-feedback wrong'; 
+          }
+        }
+        this.updateHUD();
+        const act = document.getElementById('fight-actions');
+        if (act) {
+          act.innerHTML = '';
+          const b = document.createElement('button');
+          b.className = 'btn primary';
+          b.textContent = 'Next Question';
+          b.onclick = function() { Fight.loadNextQuestion(); };
+          act.appendChild(b);
+        }
+        
+        const playerF = document.getElementById('player-fighter');
+        const enemyF = document.getElementById('enemy-fighter');
+        const arena = document.getElementById('arena');
+        if (isCorrect && playerF) { 
+          playerF.classList.add('lunge'); 
+          setTimeout(() => playerF.classList.remove('lunge'), 850); 
+        }
+        if (!isCorrect && enemyF) { 
+          enemyF.classList.add('hit'); 
+          setTimeout(() => enemyF.classList.remove('hit'), 450); 
+        }
+        if (arena) { 
+          arena.classList.add('shake'); 
+          setTimeout(() => arena.classList.remove('shake'), 400); 
+        }
+      },
+      
+      startTimer: function() {
+        this.clearTimer();
+        const t = document.getElementById('fight-timer');
+        if (!t) return;
+        let left = 30; 
+        t.textContent = left;
+        this.timer = setInterval(function() { 
+          left--; 
+          t.textContent = left; 
+          if (left <= 0) { 
+            Fight.clearTimer(); 
+            Fight.selectAnswer(false); 
+          } 
+        }, 1000);
+      },
+      
+      clearTimer: function() { 
+        if (this.timer) { 
+          clearInterval(this.timer); 
+          this.timer = null; 
+        } 
+      },
+      
+      endFight: function(won) {
+        this.clearTimer();
+        const s = State.session; 
+        const level = State.getLevel(s.campaignLevel);
+        const accuracy = s.answered > 0 ? s.correct / s.answered : 0;
+        const stars = won && accuracy >= 1 ? 3 : won && accuracy >= 0.8 ? 2 : won ? 1 : 0;
+        if (won) State.completeLevel(s.campaignLevel, stars);
+        State.checkStreak();
+        UI.showScreen('recap');
+        
+        const hl = document.getElementById('recap-headline');
+        const st = document.getElementById('recap-stars');
+        const sb = document.getElementById('recap-subtitle');
+        if (hl) { 
+          hl.textContent = won ? 'Victory!' : 'Defeat'; 
+          hl.className = 'recap-headline ' + (won ? 'win' : 'loss'); 
+        }
+        if (st) st.innerHTML = '&#9733;'.repeat(stars) + '&#9734;'.repeat(3 - stars);
+        if (sb) sb.textContent = won ? 'You defeated the enemy!' : 'Try again!';
+        document.getElementById('recap-correct').textContent = s.correct;
+        document.getElementById('recap-accuracy').textContent = `${Math.round(accuracy * 100)}%`;
+        document.getElementById('recap-combo').textContent = s.maxCombo;
+        document.getElementById('recap-xp-val').textContent = won ? level.reward.xp : 0;
+        document.getElementById('recap-coins-val').textContent = won ? level.reward.coins : 0;
+        if (won) { 
+          State.addXP(level.reward.xp); 
+          State.addCoins(level.reward.coins); 
+          UI.updateProfileBar(); 
+        }
+      }
+    };
+
+    // ========== SHOP (Global) ==========
+    const Shop = {
+      items: [
+        { id: 'monk', name: 'Monk', icon: '\ud83e\uddd8', desc: 'Unlock Monk fighter', cost: 100 },
+        { id: 'ronin', name: 'Ronin', icon: '\u2694\ufe0f', desc: 'Unlock Ronin fighter', cost: 200 }
+      ],
+      
+      render: function() {
+        const c = document.getElementById('shop-screen');
+        if (!c || c.querySelector('.shop-header')) return;
+        c.innerHTML = `
+          <div class="shop-header">
+            <button class="back-btn" onclick="UI.showScreen('menu')">&#8592; Back</button>
+            <div class="shop-wallet"><span>&#128172;</span><span id="shop-coins">${State.profile.coins}</span></div>
+          </div>
+          <div class="shop-grid" id="shop-grid"></div>
+        `;
+        this.renderItems();
+      },
+      
+      renderItems: function() {
+        const g = document.getElementById('shop-grid');
+        if (!g) return;
+        g.innerHTML = '';
+        const self = this;
+        this.items.forEach(function(i) {
+          const owned = State.profile.unlockedFighters.includes(i.id);
+          const afford = State.profile.coins >= i.cost;
+          const card = document.createElement('div');
+          card.className = 'shop-card' + (owned ? ' owned' : '') + (!afford ? ' unaffordable' : '');
+          card.innerHTML = `
+            <span class="shop-icon">${i.icon}</span>
+            <div class="shop-body">
+              <div class="shop-name">${i.name}${owned ? '<span class="shop-owned">Owned</span>' : ''}</div>
+              <div class="shop-desc">${i.desc}</div>
+            </div>
+            <div class="shop-action">
+              ${owned ? '<span class="owned-text">Owned</span>' : 
+                `<button class="shop-buy" ${!afford ? 'disabled' : ''} onclick="Shop.buy('${i.id}')">&#128172; ${i.cost}</button>`}
+            </div>
+          `;
+          g.appendChild(card);
+        });
+      },
+      
+      buy: function(id) {
+        const i = this.items.find(function(x) { return x.id === id; });
+        if (!i) return;
+        const p = State.profile; 
+        if (p.coins < i.cost) { 
+          UI.showToast('Not enough coins!', true); 
+          return; 
+        }
+        p.coins -= i.cost; 
+        State.save();
+        if (!p.unlockedFighters.includes(i.id)) { 
+          p.unlockedFighters.push(i.id); 
+          State.save(); 
+        }
+        UI.showToast(`Purchased ${i.name}!`); 
+        this.renderItems(); 
+        UI.updateProfileBar();
+        document.getElementById('shop-coins').textContent = p.coins;
+      }
+    };
+
+    // ========== SETTINGS (Global) ==========
+    const Settings = {
+      render: function() {
+        const c = document.getElementById('settings-screen');
+        if (!c || c.querySelector('.settings-section')) return;
+        const p = State.profile;
+        c.innerHTML = `
+          <div class="settings-section">
+            <h3 class="settings-title">Settings</h3>
+            <div class="settings-row">
+              <label>Music</label>
+              <input type="range" id="music-vol" min="0" max="1" step="0.1" value="${p.settings.musicVolume}">
+              <span class="settings-val" id="music-val">${Math.round(p.settings.musicVolume*100)}%</span>
+            </div>
+            <div class="settings-row">
+              <label>SFX</label>
+              <input type="range" id="sfx-vol" min="0" max="1" step="0.1" value="${p.settings.sfxVolume}">
+              <span class="settings-val" id="sfx-val">${Math.round(p.settings.sfxVolume*100)}%</span>
+            </div>
+          </div>
+          <div class="settings-section">
+            <h3 class="settings-title">Stats</h3>
+            <div class="settings-stats">
+              <div class="stat-cell"><div class="stat-cell-val">${p.playerLevel}</div><div class="stat-cell-lbl">Level</div></div>
+              <div class="stat-cell"><div class="stat-cell-val">${p.xp}</div><div class="stat-cell-lbl">XP</div></div>
+              <div class="stat-cell"><div class="stat-cell-val">${p.coins}</div><div class="stat-cell-lbl">Coins</div></div>
+              <div class="stat-cell"><div class="stat-cell-val">${p.streak.current}</div><div class="stat-cell-lbl">Streak</div></div>
+            </div>
+          </div>
+          <div class="settings-section">
+            <button class="settings-action" onclick="Settings.reset()">Reset Profile</button>
+            <button class="settings-action danger" onclick="Settings.clear()">Clear All Data</button>
+          </div>
+        `;
+        document.getElementById('music-vol').addEventListener('input', function(e) {
+          p.settings.musicVolume = parseFloat(e.target.value);
+          document.getElementById('music-val').textContent = `${Math.round(p.settings.musicVolume*100)}%`;
+          State.save();
+        });
+        document.getElementById('sfx-vol').addEventListener('input', function(e) {
+          p.settings.sfxVolume = parseFloat(e.target.value);
+          document.getElementById('sfx-val').textContent = `${Math.round(p.settings.sfxVolume*100)}%`;
+          State.save();
+        });
+      },
+      
+      reset: function() {
+        if (confirm('Reset profile?')) {
+          Object.assign(State.profile, State.defaultProfile());
+          State.profile.unlockedFighters = State.profile.unlockedFighters;
+          State.save(); 
+          UI.updateProfileBar(); 
+          UI.showToast('Profile reset!');
+        }
+      },
+      
+      clear: function() {
+        if (confirm('Clear ALL data?')) { 
+          localStorage.removeItem('codefighter_profile_v1'); 
+          location.reload(); 
+        }
+      }
+    };
+
+    // ========== INIT SCREENS ==========
+    function initScreens() {
+      // Menu
+      document.getElementById('menu-screen').innerHTML = `
+        <div class="menu-card">
+          <h1>Code Fighter</h1>
+          <p class="tag">A learning adventure</p>
+          <div class="menu-options">
+            <button class="menu-btn" onclick="UI.showScreen('map')">
+              <span class="icon">&#9876;</span>
+              <div><strong>Campaign</strong><small>Fight through patterns</small></div>
+            </button>
+            <button class="menu-btn" onclick="UI.showScreen('shop')">
+              <span class="icon">&#128722;</span>
+              <div><strong>Shop</strong><small>Unlock fighters</small></div>
+            </button>
+            <button class="menu-btn" onclick="UI.showScreen('settings')">
+              <span class="icon">&#9881;</span>
+              <div><strong>Settings</strong><small>Configure game</small></div>
+            </button>
+          </div>
+        </div>
+      `;
+      
+      // Map
+      document.getElementById('map-screen').innerHTML = `
+        <div class="map-header">
+          <button class="back-btn" onclick="UI.showScreen('menu')">&#8592; Back</button>
+          <div><h2 class="map-title">Campaign</h2><p class="map-sub">Volume 1: Arrays & Strings</p></div>
+        </div>
+        <div class="volume-header"><span>&#128193; Patterns</span></div>
+        <div class="level-list" id="level-list"></div>
+      `;
+      
+      // Fight
+      document.getElementById('fight-screen').innerHTML = `
+        <div class="fight-hud">
+          <div class="fight-fighter-info"><div class="fight-name" id="fight-player-name">Player</div><div class="fight-bar"><div class="fight-fill" id="player-hp-fill" style="width:100%"></div></div></div>
+          <div class="fight-timer-box"><div class="fight-timer" id="fight-timer">30</div><div class="fight-timer-label">Time</div></div>
+          <div class="fight-fighter-info right"><div class="fight-name enemy-name" id="fight-enemy-name">Enemy</div><div class="fight-bar"><div class="fight-fill enemy-fill" id="enemy-hp-fill" style="width:100%"></div></div></div>
+        </div>
+        <div class="arena" id="arena">
+          <div class="fighter player" id="player-fighter">&#128373;</div>
+          <div class="fighter enemy" id="enemy-fighter">&#128374;</div>
+        </div>
+        <div class="fight-question-wrap">
+          <div class="fight-question-head"><span class="question-counter" id="question-counter">Q1/5</span></div>
+          <div><span class="question-badge">Pattern</span>
+            <h3 class="question-title" id="question-title">Question</h3>
+            <p class="question-prompt" id="question-prompt">Prompt</p>
+            <pre class="question-code" id="question-code">code</pre>
+          </div>
+          <div class="mcq-list" id="mcq-options"></div>
+          <div class="fight-feedback" id="fight-feedback"></div>
+          <div class="fight-actions" id="fight-actions"></div>
+        </div>
+        <div class="boss-banner" id="boss-banner" style="display:none"></div>
+      `;
+      
+      // Recap
+      document.getElementById('recap-screen').innerHTML = `
+        <div class="recap-card">
+          <h2 class="recap-headline" id="recap-headline">Victory!</h2>
+          <div class="recap-stars" id="recap-stars">&#9733;&#9733;&#9733;</div>
+          <p class="recap-subtitle" id="recap-subtitle">You defeated the enemy!</p>
+          <div class="recap-stats">
+            <div class="recap-stat"><div class="recap-stat-val" id="recap-correct">0</div><div class="recap-stat-lbl">Correct</div></div>
+            <div class="recap-stat"><div class="recap-stat-val" id="recap-accuracy">0%</div><div class="recap-stat-lbl">Accuracy</div></div>
+            <div class="recap-stat"><div class="recap-stat-val" id="recap-combo">0</div><div class="recap-stat-lbl">Combo</div></div>
+            <div class="recap-stat"><div class="recap-stat-val">0</div><div class="recap-stat-lbl">Time</div></div>
+          </div>
+          <div class="recap-rewards">
+            <div class="recap-reward"><div class="recap-reward-val" id="recap-xp-val">0</div><div class="recap-reward-lbl">XP</div></div>
+            <div class="recap-reward"><div class="recap-reward-val" id="recap-coins-val">0</div><div class="recap-reward-lbl">Coins</div></div>
+          </div>
+          <div class="recap-actions">
+            <button class="btn primary" onclick="UI.showScreen('map')">Continue</button>
+            <button class="btn ghost" onclick="Campaign.startLevel(State.session.campaignLevel)">Retry</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // ========== INIT ==========
+    State.checkStreak();
+    initScreens();
+    UI.updateProfileBar();
+    UI.showScreen('menu');
+  </script>
+</body>
+</html>
