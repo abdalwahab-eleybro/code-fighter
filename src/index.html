@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0e1a">
+  <title>Code Fighter</title>
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+  <!-- Profile Bar -->
+  <div id="profile-bar"></div>
+  
+  <!-- Screens -->
+  <div id="menu-screen"></div>
+  <div id="map-screen"></div>
+  <div id="fight-screen"></div>
+  <div id="recap-screen"></div>
+  <div id="shop-screen"></div>
+  <div id="settings-screen"></div>
+  
+  <!-- Achievement Popup -->
+  <div class="achievement-popup" id="achievement-popup">
+    <div class="ach-sparkle"></div>
+    <span class="ach-icon" id="ach-icon"></span>
+    <div class="ach-text">
+      <div class="ach-kicker" id="ach-kicker">New!</div>
+      <div class="ach-name" id="ach-name">Achievement</div>
+      <div class="ach-desc" id="ach-desc">Description</div>
+    </div>
+    <span class="ach-rarity" id="ach-rarity"></span>
+  </div>
+  
+  <!-- Toast -->
+  <div class="shop-toast" id="shop-toast"></div>
+  
+  <!-- JavaScript -->
+  <script type="module" src="js/config/theme.js"></script>
+  <script type="module" src="js/config/game.js"></script>
+  <script type="module" src="js/data/fighters.js"></script>
+  <script type="module" src="js/core/utils.js"></script>
+  <script type="module" src="js/core/state.js"></script>
+  <script type="module" src="js/code-fighter.js"></script>
+</body>
+</html>

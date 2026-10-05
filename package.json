@@ -1,0 +1,32 @@
+{
+  "name": "code-fighter",
+  "version": "1.0.0",
+  "description": "An interactive coding game to learn algorithms through battles",
+  "main": "src/index.html",
+  "scripts": {
+    "dev": "npx serve .",
+    "build": "node build.js",
+    "build:dev": "npx esbuild src/index.html --outdir=dist --bundle --minify=false",
+    "build:prod": "npx esbuild src/index.html --outdir=dist --bundle --minify=true",
+    "lint": "npx eslint src/**/*.js",
+    "format": "npx prettier --write src/**/*.{js,css,html}"
+  },
+  "keywords": [
+    "coding",
+    "game",
+    "algorithms",
+    "learning",
+    "education"
+  ],
+  "author": "abdalwahab-eleybro",
+  "license": "MIT",
+  "devDependencies": {
+    "esbuild": "^0.23.0",
+    "eslint": "^9.0.0",
+    "prettier": "^3.0.0",
+    "serve": "^14.2.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
